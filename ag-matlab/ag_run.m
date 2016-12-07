@@ -1,75 +1,79 @@
 %Algoritmo Genetico--------------
 %Author:Adelson Araujo Junior----
 %adelsondias@live.com------------
-%Author:Igor Macêdo--------------
+%Author:Igor Macï¿½do--------------
 %--------------------------------
 
-%Variaveis do AG
-geracoes=100;
-tamanhoPopulacao=100;
+function pontoObjetivo = ag_run(posicaoAtual,datasensor,orientation)
+    %Variaveis do AG
+    geracoes=100;
+    tamanhoPopulacao=100;
 
-%escolha do objetivo parcial
-objetivoParcial = [-2 2];
-centrox = objetivoParcial(1);
-centroy = objetivoParcial(2);
-%raio do objetivo parcial
-r = 1;    
+    %escolha do objetivo parcial
+    centrox = posicaoAtual(1);
+    centroy = posicaoAtual(2);
+    %raio do objetivo parcial
+    r = 0.5;    
 
-%declaração de uma população naquele objetivoParcial
-pop = gerarPop(centrox,centroy,tamanhoPopulacao,r);
+    %declaraï¿½ï¿½o de uma populaï¿½ï¿½o naquele objetivoParcial
+    pop = gerarPop(centrox,centroy,tamanhoPopulacao,r);
 
-proximaGeracao = zeros(tamanhoPopulacao,2);
-menorDist = zeros(tamanhoPopulacao,1);
-bestGuy = zeros(tamanhoPopulacao,1);
+    proximaGeracao = zeros(tamanhoPopulacao,2);
+    menorDist = zeros(tamanhoPopulacao,1);
+    bestGuy = zeros(tamanhoPopulacao,1);
 
-%posição referente ao robô
-posicaoAtual = [-4.504 -4.535];
+    %posiï¿½ï¿½o referente ao robï¿½
+    %posicaoAtual = [-4.504 -4.535];
+    objetivo = [4.444 4.485];
 
-for i=1:geracoes
-    
-    %print populacao
-    fprintf([num2str(i) 'ª População =     ' '\nX:  ' num2str(pop(:,1)') '\nY:  ' num2str(pop(:,2)') '\n\n' ]);
-    
-    %aptidao
-    aptidaoVector = sqrt((pop(:,1)-posicaoAtual(1)).^2 + (pop(:,2)-posicaoAtual(2)).^2);
-    
-    %taxa de cruzamento 50%
-    txcru = 0.5;
-    
-    for j = 1:floor(tamanhoPopulacao*txcru)
-    
-        %selecao
-        [selecionado1, selecionado2] = selecaoTorneio(pop,aptidaoVector);
-        
-        %cruzamento
-        filho = cruzamento(pop,selecionado1,selecionado2);
-        proximaGeracao(j,:) = filho;
-        
+    for i=1:geracoes
+
+        %print populacao
+        %fprintf([num2str(i) 'ï¿½ Populaï¿½ï¿½o =     ' '\nX:  ' num2str(pop(:,1)') '\nY:  ' num2str(pop(:,2)') '\n\n' ]);
+
+        %aptidao
+        aptidaoVector = aptidaoFuction(objetivo, pop, datasensor, posicaoAtual, orientation); % sqrt((pop(:,1)-posicaoAtual(1)).^2 + (pop(:,2)-posicaoAtual(2)).^2);
+
+        %taxa de cruzamento 50%
+        txcru = 0.5;
+
+        for j = 1:floor(tamanhoPopulacao*txcru)
+
+            %selecao
+            [selecionado1, selecionado2] = selecaoTorneio(pop,aptidaoVector);
+
+            %cruzamento
+            filho = cruzamento(pop,selecionado1,selecionado2);
+            proximaGeracao(j,:) = filho;
+
+        end
+
+        %enviar para a prï¿½xima geraï¿½ï¿½o aqueles que nï¿½o cruzaram
+        for k = int64(tamanhoPopulacao*txcru):(tamanhoPopulacao)
+            proximaGeracao(k,:) = pop(k,:);
+        end
+
+        %Mutacao (taxaMutaï¿½ï¿½o 1%)
+        taxaMutacao=0.01;
+        forcaMutacao=1;
+        nMutacao = floor(taxaMutacao*size(pop,1));
+        for k=1:nMutacao
+            indiceMutado = randi(size(pop,1));
+            pop(indiceMutado) = pop(indiceMutado)+forcaMutacao;
+        end
+
+        %Repassando a prï¿½xima geraï¿½ï¿½o para nova iteraï¿½ï¿½o
+        pop = proximaGeracao;
+
+        %Vetor de melhores individuos de cada geraï¿½ï¿½o
+        [menorDist(i),bestGuy(i)] = min(aptidaoVector);
     end
-    
-    %enviar para a próxima geração aqueles que não cruzaram
-    for k = int64(tamanhoPopulacao*txcru):(tamanhoPopulacao)
-        proximaGeracao(k,:) = pop(k,:);
-    end
-    
-    %Mutacao (taxaMutação 1%)
-    taxaMutacao=0.01;
-    forcaMutacao=1;
-    nMutacao = floor(taxaMutacao*size(pop,1));
-    for k=1:nMutacao
-        indiceMutado = randi(size(pop,1));
-        pop(indiceMutado) = pop(indiceMutado)+forcaMutacao;
-    end
-    
-    %Repassando a próxima geração para nova iteração
-    pop = proximaGeracao;
 
-    %Vetor de melhores individuos de cada geração
-    [menorDist(i),bestGuy(i)] = min(aptidaoVector);
+    %Printando a populaï¿½ï¿½o final
+    fprintf(['Populacao Final:     \nX: ' num2str(pop(:,1)') '\nY:  ' num2str(pop(:,2)') '\n\n']);
+
+    menorDist(tamanhoPopulacao); %Melhor fitness
+    bestGuy(tamanhoPopulacao);   %Indice do sujeito de melhor fitness
+    
+    pontoObjetivo = pop(bestGuy(tamanhoPopulacao),:);
 end
-
-%Printando a população final
-fprintf(['Populacao Final:     \nX: ' num2str(pop(:,1)') '\nY:  ' num2str(pop(:,2)') '\n']);
-
-menorDist(tamanhoPopulacao) %Melhor fitness
-bestGuy(tamanhoPopulacao)   %Indice do sujeito de melhor fitness
